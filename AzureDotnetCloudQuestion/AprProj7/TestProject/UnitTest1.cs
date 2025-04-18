@@ -124,15 +124,15 @@ namespace dotnetapp.Tests
         }
 
         [Test, Order(7)]
-        public void Test_UpdateProduct_Method_Exists()
+        public void Test_UpdateProductByName_Method_Exists()
         {
             // UPDATED: If method is in Program class
-            MethodInfo method = typeof(dotnetapp.Program).GetMethod("UpdateProduct");
+            MethodInfo method = typeof(dotnetapp.Program).GetMethod("UpdateProductByName");
             Assert.IsNotNull(method, "UpdateProduct method should exist in Program class.");
         }
 
         [Test, Order(8)]
-        public void Test_UpdateProduct_Should_Modify_Record()
+        public void Test_UpdateProductByName_Should_Modify_Record()
         {
             var product = new PetrolProduct
             {
@@ -148,10 +148,17 @@ namespace dotnetapp.Tests
             addMethod.Invoke(null, new object[] { product });
 
             // Invoke UpdateProduct(ProductName, QuantityAvailable, UnitPrice, AdditionalNotes)
-            MethodInfo updateMethod = typeof(dotnetapp.Program).GetMethod("UpdateProduct");
+            MethodInfo updateMethod = typeof(dotnetapp.Program).GetMethod("UpdateProductByName");
             Assert.IsNotNull(updateMethod, "UpdateProduct method should exist in Program class.");
-            updateMethod.Invoke(null, new object[] { "Regular Petrol", "600L", "95.00", "Updated Quality" });
-
+            updateMethod.Invoke(null, new object[]
+            {
+                "Regular Petrol",      // productName
+                "600L",                // newQuantity
+                "95.00",               // newPrice
+                "9876543210",          // newContact
+                DateTime.Now.ToString("yyyy-MM-dd"), // newRestocked
+                "Updated Quality"      // newNotes
+            });
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
