@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Data.SqlClient;
 using dotnetapp.Models;
@@ -8,7 +8,7 @@ namespace dotnetapp
     public static class ConnectionStringProvider
     {
         public static string ConnectionString { get; } =
-            "User ID=sa;Password=examlyMssql@123;Server=localhost;Database=appdb;Trusted_Connection=False;Encrypt=False";
+            "User ID=sa;password=examlyMssql@123; server=localhost;Database=appdb;trusted_connection=false;Persist Security Info=False;Encrypt=False";
     }
 
     public class Program
@@ -19,137 +19,180 @@ namespace dotnetapp
         {
             while (true)
             {
-                Console.WriteLine("\nMarketing Branding Recommendation Management Menu");
-                Console.WriteLine("1. Add Branding Recommendation");
-                Console.WriteLine("2. Delete Recommendation by Campaign Type");
-                Console.WriteLine("3. Display All Recommendations");
+                Console.WriteLine("\nPetrol Product Management Menu");
+                Console.WriteLine("1. Add Petrol Product");
+                Console.WriteLine("2. Update Petrol Product by Name");
+                Console.WriteLine("3. Display All Petrol Products");
                 Console.WriteLine("4. Exit");
-
                 Console.Write("Enter your choice (1-4): ");
-                string choice = Console.ReadLine();
 
-                switch (choice)
+                switch (Console.ReadLine())
                 {
                     case "1":
-                        AddBrandRecommendation();
+                        PetrolProduct newProduct = GetProductInput();
+                        AddProduct(newProduct);
                         break;
+                   case "2":
+                        Console.Write("Enter Product Name to update: ");
+                        string updateName = Console.ReadLine();
 
-                    case "2":
-                        Console.Write("Enter Campaign Type to delete: ");
-                        string typeToDelete = Console.ReadLine();
-                        DeleteRecommendationByCampaignType(typeToDelete);
+                        Console.Write("Enter new Quantity Available: ");
+                        string updateQty = Console.ReadLine();
+
+                        Console.Write("Enter new Unit Price: ");
+                        string updatePrice = Console.ReadLine();
+
+                        Console.Write("Enter new Supplier Contact: ");
+                        string updateContact = Console.ReadLine();
+
+                        Console.Write("Enter new Last Restocked Date (yyyy-MM-dd): ");
+                        string updateRestocked = Console.ReadLine();
+
+                        Console.Write("Enter new Additional Notes: ");
+                        string updateNotes = Console.ReadLine();
+
+                        UpdateProductByName(updateName, updateQty, updatePrice, updateContact, updateRestocked, updateNotes);
                         break;
 
                     case "3":
-                        DisplayAllRecommendations();
+                        DisplayAllProducts();
                         break;
-
                     case "4":
+                        Console.WriteLine("Exiting the application...");
                         return;
-
                     default:
-                        Console.WriteLine("Invalid choice. Try again.");
+                        Console.WriteLine("Invalid choice, please try again.");
                         break;
                 }
             }
         }
 
-        public static void AddBrandRecommendation()
+        private static PetrolProduct GetProductInput()
         {
-            Console.Write("Client Name: ");
-            string clientName = Console.ReadLine();
+            Console.Write("Enter Product Name: ");
+            string name = Console.ReadLine();
 
-            Console.Write("Email: ");
-            string email = Console.ReadLine();
+            Console.Write("Enter Quantity Available: ");
+            string qty = Console.ReadLine();
 
-            Console.Write("Campaign Type: ");
-            string campaignType = Console.ReadLine();
+            Console.Write("Enter Unit Price: ");
+            string price = Console.ReadLine();
 
-            Console.Write("Target Audience: ");
-            string targetAudience = Console.ReadLine();
+            Console.Write("Enter Supplier Contact: ");
+            string contact = Console.ReadLine();
 
-            Console.Write("Core Message: ");
-            string coreMessage = Console.ReadLine();
+            Console.Write("Enter Last Restocked Date (yyyy-MM-dd): ");
+            string restocked = Console.ReadLine();
 
-            Console.Write("Suggested Channels: ");
-            string suggestedChannels = Console.ReadLine();
+            Console.Write("Enter Additional Notes: ");
+            string notes = Console.ReadLine();
 
-            Console.Write("Creation Date (yyyy-MM-dd): ");
-            string createdAt = Console.ReadLine();
-
-            BrandRecommendation recommendation = new BrandRecommendation
+            return new PetrolProduct
             {
-                ClientName = clientName,
-                Email = email,
-                CampaignType = campaignType,
-                TargetAudience = targetAudience,
-                CoreMessage = coreMessage,
-                SuggestedChannels = suggestedChannels,
-                CreatedAt = createdAt
+                ProductName = name,
+                QuantityAvailable = qty,
+                UnitPrice = price,
+                SupplierContact = contact,
+                LastRestocked = restocked,
+                AdditionalNotes = notes
             };
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                string query = @"INSERT INTO BrandRecommendation 
-                                (ClientName, Email, CampaignType, TargetAudience, CoreMessage, SuggestedChannels, CreatedAt) 
-                                 VALUES 
-                                (@ClientName, @Email, @CampaignType, @TargetAudience, @CoreMessage, @SuggestedChannels, @CreatedAt)";
-
-                SqlCommand cmd = new SqlCommand(query, connection);
-                cmd.Parameters.AddWithValue("@ClientName", recommendation.ClientName);
-                cmd.Parameters.AddWithValue("@Email", recommendation.Email);
-                cmd.Parameters.AddWithValue("@CampaignType", recommendation.CampaignType);
-                cmd.Parameters.AddWithValue("@TargetAudience", recommendation.TargetAudience);
-                cmd.Parameters.AddWithValue("@CoreMessage", recommendation.CoreMessage);
-                cmd.Parameters.AddWithValue("@SuggestedChannels", recommendation.SuggestedChannels);
-                cmd.Parameters.AddWithValue("@CreatedAt", recommendation.CreatedAt);
-
-                connection.Open();
-                cmd.ExecuteNonQuery();
-                Console.WriteLine("Recommendation added successfully.");
-            }
         }
 
-        public static void DeleteRecommendationByCampaignType(string campaignType)
+        public static void AddProduct(PetrolProduct product)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            try
             {
-                SqlCommand cmd = new SqlCommand("DELETE FROM BrandRecommendation WHERE CampaignType = @CampaignType", connection);
-                cmd.Parameters.AddWithValue("@CampaignType", campaignType);
-
-                connection.Open();
-                int rowsAffected = cmd.ExecuteNonQuery();
-
-                if (rowsAffected > 0)
-                    Console.WriteLine("Recommendation(s) deleted successfully.");
-                else
-                    Console.WriteLine($"No recommendations found with campaign type '{campaignType}'.");
-            }
-        }
-
-        public static void DisplayAllRecommendations()
-        {
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                SqlDataAdapter adapter = new SqlDataAdapter("SELECT * FROM BrandRecommendation", connection);
-                DataSet ds = new DataSet();
-                adapter.Fill(ds, "BrandRecommendation");
-
-                DataTable table = ds.Tables["BrandRecommendation"];
-
-                if (table.Rows.Count > 0)
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    foreach (DataRow row in table.Rows)
+                    SqlDataAdapter adapter = new SqlDataAdapter("SELECT * FROM PetrolProducts", connection);
+                    DataSet ds = new DataSet();
+                    adapter.Fill(ds, "PetrolProducts");
+
+                    DataTable table = ds.Tables["PetrolProducts"];
+                    DataRow newRow = table.NewRow();
+
+                    newRow["ProductName"] = product.ProductName;
+                    newRow["QuantityAvailable"] = product.QuantityAvailable;
+                    newRow["UnitPrice"] = product.UnitPrice;
+                    newRow["SupplierContact"] = product.SupplierContact;
+                    newRow["LastRestocked"] = product.LastRestocked;
+                    newRow["AdditionalNotes"] = product.AdditionalNotes;
+
+                    table.Rows.Add(newRow);
+
+                    SqlCommandBuilder builder = new SqlCommandBuilder(adapter);
+                    adapter.Update(ds, "PetrolProducts");
+
+                    Console.WriteLine("Petrol product added successfully.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error adding product: {ex.Message}");
+            }
+        }
+
+            public static void UpdateProductByName(string productName, string newQuantity, string newPrice, string newContact, string newRestocked, string newNotes)
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    SqlDataAdapter adapter = new SqlDataAdapter("SELECT * FROM PetrolProducts WHERE ProductName = @ProductName", connection);
+                    adapter.SelectCommand.Parameters.AddWithValue("@ProductName", productName);
+
+                    DataSet ds = new DataSet();
+                    adapter.Fill(ds, "PetrolProducts");
+
+                    DataTable table = ds.Tables["PetrolProducts"];
+
+                    if (table.Rows.Count == 0)
                     {
-                        Console.WriteLine($"\nClient ID: {row["ClientID"]}\nClient Name: {row["ClientName"]}\nEmail: {row["Email"]}");
-                        Console.WriteLine($"Campaign Type: {row["CampaignType"]}\nTarget Audience: {row["TargetAudience"]}");
-                        Console.WriteLine($"Core Message: {row["CoreMessage"]}\nSuggested Channels: {row["SuggestedChannels"]}\nCreated At: {row["CreatedAt"]}");
+                        Console.WriteLine($"No petrol product found with name {productName}");
+                        return;
                     }
+
+                    DataRow row = table.Rows[0];
+                    row["QuantityAvailable"] = newQuantity;
+                    row["UnitPrice"] = newPrice;
+                    row["SupplierContact"] = newContact;
+                    row["LastRestocked"] = newRestocked;
+                    row["AdditionalNotes"] = newNotes;
+
+                    SqlCommandBuilder builder = new SqlCommandBuilder(adapter);
+                    adapter.Update(ds, "PetrolProducts");
+
+                    Console.WriteLine("Petrol product updated successfully.");
                 }
-                else
+            }
+
+
+        public static void DisplayAllProducts()
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    Console.WriteLine("No brand recommendations found.");
+                    SqlDataAdapter adapter = new SqlDataAdapter("SELECT * FROM PetrolProducts", connection);
+                    DataSet ds = new DataSet();
+                    adapter.Fill(ds, "PetrolProducts");
+
+                    DataTable table = ds.Tables["PetrolProducts"];
+
+                    if (table.Rows.Count == 0)
+                    {
+                        Console.WriteLine("No petrol products found.");
+                        return;
+                    }
+
+            foreach (DataRow row in table.Rows)
+            {
+                Console.WriteLine($"ProductID: {row["ProductID"]} | Name: {row["ProductName"]} | Quantity: {row["QuantityAvailable"]} | Unit Price: {row["UnitPrice"]} | Supplier: {row["SupplierContact"]} | Restocked: {row["LastRestocked"]} | Notes: {row["AdditionalNotes"]}");
+            }
+
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error displaying products: {ex.Message}");
             }
         }
     }
