@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Reflection;
@@ -8,7 +9,7 @@ using NUnit.Framework;
 namespace dotnetapp.Tests
 {
     [TestFixture]
-    public class PetrolProductTests
+    public class EMITests
     {
         private string connectionString = "User ID=sa;password=examlyMssql@123; server=localhost;Database=appdb;trusted_connection=false;Persist Security Info=False;Encrypt=False";
         private StringWriter consoleOutput;
@@ -33,137 +34,119 @@ namespace dotnetapp.Tests
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                string query = "DELETE FROM PetrolProducts";
+                string query = "DELETE FROM EMIDetails";
                 SqlCommand cmd = new SqlCommand(query, connection);
                 cmd.ExecuteNonQuery();
             }
         }
 
-        [Test, Order(1)]
-        public void Test_PetrolProduct_Class_Should_Exist()
+        private void AddTestEMI(string borrowerName, string loanType)
         {
-            Type type = typeof(PetrolProduct);
-            Assert.IsNotNull(type, "PetrolProduct class should exist.");
+            EMIDetails emi = new EMIDetails
+            {
+                BorrowerName = borrowerName,
+                LoanType = loanType,
+                StartDate = "2024-05-01",
+                EndDate = "2025-05-01",
+                EMIAmount = "12000",
+                Description = "Test EMI"
+            };
+            Program.AddEMIDetails(emi);
+        }
+
+        [Test, Order(1)]
+        public void Test_EMIDetails_Class_Should_Exist()
+        {
+            Type type = typeof(EMIDetails);
+            Assert.IsNotNull(type, "EMIDetails class should exist.");
         }
 
         [Test, Order(2)]
-        public void Test_PetrolProduct_Properties_Should_Exist()
+        public void Test_AddEMIDetails_Should_Insert_Into_Database()
         {
-            Type type = typeof(PetrolProduct);
+            AddTestEMI("John", "Home Loan");
 
-            Assert.IsNotNull(type.GetProperty("ProductName"));
-            Assert.IsNotNull(type.GetProperty("QuantityAvailable"));
-            Assert.IsNotNull(type.GetProperty("UnitPrice"));
-            Assert.IsNotNull(type.GetProperty("SupplierContact"));
-            Assert.IsNotNull(type.GetProperty("LastRestocked"));
-            Assert.IsNotNull(type.GetProperty("AdditionalNotes"));
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                string query = "SELECT COUNT(*) FROM EMIDetails WHERE BorrowerName = 'John'";
+                SqlCommand cmd = new SqlCommand(query, connection);
+                int count = (int)cmd.ExecuteScalar();
+                Assert.AreEqual(1, count);
+            }
         }
 
         [Test, Order(3)]
-        public void Test_AddProduct_Method_Exists()
+        public void Test_DisplayAllEMIs_Should_Show_Data()
         {
-            MethodInfo method = typeof(dotnetapp.Program).GetMethod("AddProduct");
-            Assert.IsNotNull(method, "AddProduct method should exist in Program class.");
-        }
+            AddTestEMI("Alice", "Education Loan");
 
-        [Test, Order(4)]
-        public void Test_DisplayAllProducts_Method_Exists()
-        {
-            MethodInfo method = typeof(dotnetapp.Program).GetMethod("DisplayAllProducts");
-            Assert.IsNotNull(method, "DisplayAllProducts method should exist in Program class.");
-        }
-
-        [Test, Order(5)]
-        public void Test_AddProduct_Should_Insert_Into_Database()
-        {
-            var product = new PetrolProduct
-            {
-                ProductName = "Speed Petrol",
-                QuantityAvailable = "1000L",
-                UnitPrice = "120.50",
-                SupplierContact = "9876543210",
-                LastRestocked = DateTime.Now.ToString("yyyy-MM-dd"),
-                AdditionalNotes = "High Octane"
-            };
-
-            MethodInfo method = typeof(dotnetapp.Program).GetMethod("AddProduct");
-            method.Invoke(null, new object[] { product });
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-                string query = "SELECT COUNT(*) FROM PetrolProducts WHERE ProductName = 'Speed Petrol'";
-                SqlCommand cmd = new SqlCommand(query, connection);
-                int count = (int)cmd.ExecuteScalar();
-
-                Assert.AreEqual(1, count, "Product should be inserted into the database.");
-            }
-        }
-
-        [Test, Order(6)]
-        public void Test_DisplayAllProducts_Should_Show_Data()
-        {
-            var product = new PetrolProduct
-            {
-                ProductName = "Premium Petrol",
-                QuantityAvailable = "500L",
-                UnitPrice = "140.00",
-                SupplierContact = "9876543210",
-                LastRestocked = DateTime.Now.ToString("yyyy-MM-dd"),
-                AdditionalNotes = "Premium Quality"
-            };
-
-            MethodInfo addMethod = typeof(dotnetapp.Program).GetMethod("AddProduct");
-            addMethod.Invoke(null, new object[] { product });
-
-            MethodInfo displayMethod = typeof(dotnetapp.Program).GetMethod("DisplayAllProducts");
+            MethodInfo displayMethod = typeof(Program).GetMethod("DisplayAllEMIs");
             displayMethod.Invoke(null, null);
 
             string output = consoleOutput.ToString();
-            Assert.IsTrue(output.Contains("Premium Petrol"), "DisplayAllProducts should print the product details.");
+            Assert.IsTrue(output.Contains("Alice"), "DisplayAllEMIs should print the EMI details.");
+        }
+
+        [Test, Order(4)]
+        public void Test_EMIDetails_Properties_Should_Exist()
+        {
+            Type type = typeof(EMIDetails);
+            Assert.IsNotNull(type.GetProperty("BorrowerName"));
+            Assert.IsNotNull(type.GetProperty("LoanType"));
+            Assert.IsNotNull(type.GetProperty("StartDate"));
+            Assert.IsNotNull(type.GetProperty("EndDate"));
+            Assert.IsNotNull(type.GetProperty("EMIAmount"));
+            Assert.IsNotNull(type.GetProperty("Description"));
+        }
+
+        [Test, Order(5)]
+        public void Test_AddEMIDetails_Method_Should_Exist()
+        {
+            var method = typeof(Program).GetMethod("AddEMIDetails");
+            Assert.IsNotNull(method, "AddEMIDetails method should exist in Program class.");
+        }
+
+        [Test, Order(6)]
+        public void Test_DisplayAllEMIs_Method_Should_Exist()
+        {
+            var method = typeof(Program).GetMethod("DisplayAllEMIs");
+            Assert.IsNotNull(method, "DisplayAllEMIs method should exist in Program class.");
         }
 
         [Test, Order(7)]
-        public void Test_UpdateProduct_Method_Exists()
+        public void Test_DeleteEMIByLoanType_Method_Should_Exist()
         {
-            // UPDATED: If method is in Program class
-            MethodInfo method = typeof(dotnetapp.Program).GetMethod("UpdateProduct");
-            Assert.IsNotNull(method, "UpdateProduct method should exist in Program class.");
+            var method = typeof(Program).GetMethod("DeleteEMIByLoanType");
+            Assert.IsNotNull(method, "DeleteEMIByLoanType method should exist in Program class.");
         }
 
         [Test, Order(8)]
-        public void Test_UpdateProduct_Should_Modify_Record()
+        public void Test_DeleteNonExistentEMIByLoanType()
         {
-            var product = new PetrolProduct
-            {
-                ProductName = "Regular Petrol",
-                QuantityAvailable = "800L",
-                UnitPrice = "100.00",
-                SupplierContact = "9876543210",
-                LastRestocked = DateTime.Now.ToString("yyyy-MM-dd"),
-                AdditionalNotes = "Regular Quality"
-            };
-
-            MethodInfo addMethod = typeof(dotnetapp.Program).GetMethod("AddProduct");
-            addMethod.Invoke(null, new object[] { product });
-
-            // Invoke UpdateProduct(ProductName, QuantityAvailable, UnitPrice, AdditionalNotes)
-            MethodInfo updateMethod = typeof(dotnetapp.Program).GetMethod("UpdateProduct");
-            Assert.IsNotNull(updateMethod, "UpdateProduct method should exist in Program class.");
-            updateMethod.Invoke(null, new object[] { "Regular Petrol", "600L", "95.00", "Updated Quality" });
+            Program.DeleteEMIByLoanType("InvalidLoanType");
 
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                connection.Open();
-                string query = "SELECT QuantityAvailable, UnitPrice, AdditionalNotes FROM PetrolProducts WHERE ProductName = 'Regular Petrol'";
-                SqlCommand cmd = new SqlCommand(query, connection);
-                SqlDataReader reader = cmd.ExecuteReader();
-
-                Assert.IsTrue(reader.Read(), "Product should exist.");
-                Assert.AreEqual("600L", reader.GetString(0));
-                Assert.AreEqual("95.00", reader.GetString(1));
-                Assert.AreEqual("Updated Quality", reader.GetString(2));
+                SqlDataAdapter adapter = new SqlDataAdapter("SELECT COUNT(*) FROM EMIDetails", connection);
+                DataTable table = new DataTable();
+                adapter.Fill(table);
+                int count = Convert.ToInt32(table.Rows[0][0]);
+                Assert.AreEqual(0, count, "No records should be deleted for a non-existent loan type.");
             }
+        }
+
+        [Test, Order(9)]
+        public void Test_DisplayAllByproducts_Should_Show_Data()
+        {
+            AddTestEMI("Sam", "Agri Loan");
+            AddTestEMI("Lily", "Education Loan");
+
+            MethodInfo displayMethod = typeof(Program).GetMethod("DisplayAllEMIs");
+            displayMethod.Invoke(null, null);
+
+            string output = consoleOutput.ToString();
+            Assert.IsTrue(output.Contains("Sam") && output.Contains("Lily"), "All EMIs should be displayed properly.");
         }
     }
 }
