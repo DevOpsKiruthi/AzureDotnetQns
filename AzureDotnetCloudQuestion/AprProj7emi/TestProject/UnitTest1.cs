@@ -115,7 +115,6 @@ namespace dotnetapp.Tests
         }
 
         [Test, Order(7)]
-<<<<<<< HEAD
         public void Test_DeleteEMIByLoanType_Method_Should_Exist()
         {
             var method = typeof(Program).GetMethod("DeleteEMIByLoanType");
@@ -127,43 +126,6 @@ namespace dotnetapp.Tests
         {
             Program.DeleteEMIByLoanType("InvalidLoanType");
 
-=======
-        public void Test_UpdateProductByName_Method_Exists()
-        {
-            // UPDATED: If method is in Program class
-            MethodInfo method = typeof(dotnetapp.Program).GetMethod("UpdateProductByName");
-            Assert.IsNotNull(method, "UpdateProduct method should exist in Program class.");
-        }
-
-        [Test, Order(8)]
-        public void Test_UpdateProductByName_Should_Modify_Record()
-        {
-            var product = new PetrolProduct
-            {
-                ProductName = "Regular Petrol",
-                QuantityAvailable = "800L",
-                UnitPrice = "100.00",
-                SupplierContact = "9876543210",
-                LastRestocked = DateTime.Now.ToString("yyyy-MM-dd"),
-                AdditionalNotes = "Regular Quality"
-            };
-
-            MethodInfo addMethod = typeof(dotnetapp.Program).GetMethod("AddProduct");
-            addMethod.Invoke(null, new object[] { product });
-
-            // Invoke UpdateProduct(ProductName, QuantityAvailable, UnitPrice, AdditionalNotes)
-            MethodInfo updateMethod = typeof(dotnetapp.Program).GetMethod("UpdateProductByName");
-            Assert.IsNotNull(updateMethod, "UpdateProduct method should exist in Program class.");
-            updateMethod.Invoke(null, new object[]
-            {
-                "Regular Petrol",      // productName
-                "600L",                // newQuantity
-                "95.00",               // newPrice
-                "9876543210",          // newContact
-                DateTime.Now.ToString("yyyy-MM-dd"), // newRestocked
-                "Updated Quality"      // newNotes
-            });
->>>>>>> aec3332de891ec0d4e208581f071a751bdc3131f
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 SqlDataAdapter adapter = new SqlDataAdapter("SELECT COUNT(*) FROM EMIDetails", connection);
@@ -188,5 +150,3 @@ namespace dotnetapp.Tests
         }
     }
 }
-git add AprProj7/TestProject/UnitTest1.cs
-git add AprProj7/dotnetapp/Program.cs
